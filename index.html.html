@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام نقاط الطلاب الأسبوعي</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="text-slate-100 flex flex-col justify-between min-h-screen p-4 md:p-8">
+
+    <!-- Header / Nav -->
+    <header class="max-w-4xl mx-auto w-full flex justify-between items-center py-4 px-6 glass-card rounded-2xl shadow-xl mb-6">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-trophy text-amber-400"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg text-white">نظام النقاط الأسبوعي</h1>
+                <p class="text-xs text-slate-400" id="currentRoleText">صفحة الدخول الرئيسية</p>
+            </div>
+        </div>
+        <button id="logoutBtn" onclick="logout()" class="hidden bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+            <i class="fa-solid fa-right-from-bracket ml-2"></i>تسجيل الخروج
+        </button>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto w-full flex-grow flex items-center justify-center">
+
+        <!-- 1. LOGIN SCREEN -->
+        <div id="loginScreen" class="w-full max-w-md glass-card rounded-3xl p-8 shadow-2xl transition-all">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-white mb-2">مرحباً بك 👋</h2>
+                <p class="text-slate-400 text-sm">اختر نوع الحساب وأدخل بياناتك للدخول</p>
+            </div>
+
+            <!-- Role Tabs -->
+            <div class="grid grid-cols-2 gap-2 bg-slate-900/60 p-1.5 rounded-2xl mb-6">
+                <button type="button" id="tabStudent" onclick="switchTab('student')" class="py-2.5 rounded-xl text-sm font-bold transition-all bg-indigo-600 text-white shadow-md">
+                    <i class="fa-solid fa-user-graduate ml-2"></i>طالب
+                </button>
+                <button type="button" id="tabTeacher" onclick="switchTab('teacher')" class="py-2.5 rounded-xl text-sm font-bold transition-all text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-chalkboard-user ml-2"></i>المستر
+                </button>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-[#15]">
+                
+                <!-- Student Specific Inputs -->
+                <div id="studentInputs" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-2">اسم الطالب:</label>
+                        <input type="text" id="studentName" placeholder="أدخل اسمك بالكامل..." class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-all text-white placeholder-slate-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-2">الفصل الدراسي:</label>
+                        <select id="studentClassSelect" class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-all text-white">
+                            <option value="9A">فصل 9A</option>
+                            <option value="9B">فصل 9B</option>
+                            <option value="9C">فصل 9C</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-2">كود الفصل:</label>
+                        <input type="password" id="studentClassPin" placeholder="أدخل كود الفصل الخاص بك..." class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-all text-white placeholder-slate-500">
+                    </div>
+                </div>
+
+                <!-- Teacher Specific Inputs -->
+                <div id="teacherInputs" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-2">كود دخول المستر:</label>
+                        <input type="password" id="teacherPin" placeholder="أدخل كود المستر..." class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-all text-white placeholder-slate-500">
+                    </div>
+                </div>
+
+                <!-- Error Alert -->
+                <div id="loginError" class="hidden text-rose-400 bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl text-xs text-center font-semibold mt-4"></div>
+
+                <button type="submit" class="w-full mt-6 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/30 transition-all active:scale-[0.98]">
+                    دخول النظام <i class="fa-solid fa-arrow-left mr-2"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- 2. STUDENT DASHBOARD -->
+        <div id="studentDashboard" class="w-full hidden space-y-6">
+            <!-- Welcome Header -->
+            <div class="glass-card rounded-3xl p-6 flex flex-col md:flex-row justify-between items-center gap-4 border-r-4 border-indigo-500">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        مرحباً بك، <span id="currentStudentDisplayName" class="text-indigo-400"></span> 🎓
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">
+                        أنت الآن متواجد في: <span id="currentStudentClassBadge" class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-0.5 rounded-md text-xs font-semibold"></span>
+                    </p>
+                </div>
+                <div class="bg-indigo-600/20 border border-indigo-500/30 px-6 py-3 rounded-2xl text-center">
+                    <span class="block text-xs text-indigo-300">نقاطك الحالية</span>
+                    <span id="studentMyPoints" class="text-3xl font-extrabold text-indigo-400">0</span>
+                </div>
+            </div>
+
+            <!-- Class Leaderboard -->
+            <div class="glass-card rounded-3xl p-6">
+                <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-ranking-star text-amber-400"></i>
+                    ترتيب الطلاب في فصل <span id="studentLeaderboardClass"></span>
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-right">
+                        <thead class="bg-slate-900/50 text-slate-400 text-xs uppercase border-b border-slate-700/50">
+                            <tr>
+                                <th class="p-3">الترتيب</th>
+                                <th class="p-3">اسم الطالب</th>
+                                <th class="p-3 text-center">النقاط</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentLeaderboardBody" class="divide-y divide-slate-800">
+                            <!-- Rows injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. TEACHER DASHBOARD -->
+        <div id="teacherDashboard" class="w-full hidden space-y-6">
+            <!-- Class Switcher & Add Student Header -->
+            <div class="glass-card rounded-3xl p-6 space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">لوحة تحكم المستر 👨‍🏫</h2>
+                        <p class="text-xs text-slate-400 mt-1">إدارة نقاط وطلاب الفصول بكل سهولة</p>
+                    </div>
+
+                    <!-- Class Select Tabs -->
+                    <div class="flex bg-slate-900/80 p-1 rounded-2xl border border-slate-700/50">
+                        <button onclick="switchTeacherClass('9A')" id="btnClass9A" class="px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white">فصل 9A</button>
+                        <button onclick="switchTeacherClass('9B')" id="btnClass9B" class="px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white">فصل 9B</button>
+                        <button onclick="switchTeacherClass('9C')" id="btnClass9C" class="px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white">فصل 9C</button>
+                    </div>
+                </div>
+
+                <!-- Add Student Form -->
+                <form onsubmit="handleAddStudent(event)" class="flex gap-2">
+                    <input type="text" id="newStudentName" placeholder="إضافة طالب جديد لـ هذا الفصل..." class="flex-grow bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 text-white placeholder-slate-500" required>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-plus"></i> إضافة
+                    </button>
+                </form>
+            </div>
+
+            <!-- Students Points Table -->
+            <div class="glass-card rounded-3xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i>
+                        قائمة الطلاب والنقاط - <span id="currentTeacherClassTitle" class="text-indigo-400">9A</span>
+                    </h3>
+                    <button onclick="resetClassPoints()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-lg transition-all">
+                        <i class="fa-solid fa-rotate-right ml-1"></i> تصفير النقاط
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-right">
+                        <thead class="bg-slate-900/50 text-slate-400 text-xs uppercase border-b border-slate-700/50">
+                            <tr>
+                                <th class="p-3">اسم الطالب</th>
+                                <th class="p-3 text-center">النقاط الحالية</th>
+                                <th class="p-3 text-center">التحكم بالنقاط</th>
+                                <th class="p-3 text-center">حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherStudentsBody" class="divide-y divide-slate-800">
+                            <!-- Rows injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-slate-500">
+        نظام إدارة النقاط الأسبوعية © 2026
+    </footer>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // =========================================================
+        // 🔑 مكان تغيير الأكواد والرموز السرية بسهولة:
+        // =========================================================
+        const TEACHER_PIN = "Ab564"; // كود المستر
+
+        const CLASS_PINS = {
+            "9A": "7An31", // كود فصل 9A
+            "9B": "b0789", // كود فصل 9B
+            "9C": "C4861"  // كود فصل 9C
+        };
+        // =========================================================
+
+        // State variables
+        let currentRole = "student"; // student | teacher
+        let activeTeacherClass = "9A"; // 9A, 9B, 9C
+        let loggedStudent = null; // { name, class }
+
+        // Initial Data Structure
+        let db = JSON.parse(localStorage.getItem('school_points_db')) || {
+            "9A": [],
+            "9B": [],
+            "9C": []
+        };
+
+        function saveData() {
+            localStorage.setItem('school_points_db', JSON.stringify(db));
+        }
+
+        // Switch between Student and Teacher Login Tabs
+        function switchTab(role) {
+            currentRole = role;
+            const tabStudent = document.getElementById('tabStudent');
+            const tabTeacher = document.getElementById('tabTeacher');
+            const studentInputs = document.getElementById('studentInputs');
+            const teacherInputs = document.getElementById('teacherInputs');
+            const loginError = document.getElementById('loginError');
+
+            loginError.classList.add('hidden');
+
+            if (role === 'student') {
+                tabStudent.className = "py-2.5 rounded-xl text-sm font-bold transition-all bg-indigo-600 text-white shadow-md";
+                tabTeacher.className = "py-2.5 rounded-xl text-sm font-bold transition-all text-slate-400 hover:text-white";
+                studentInputs.classList.remove('hidden');
+                teacherInputs.classList.add('hidden');
+            } else {
+                tabTeacher.className = "py-2.5 rounded-xl text-sm font-bold transition-all bg-indigo-600 text-white shadow-md";
+                tabStudent.className = "py-2.5 rounded-xl text-sm font-bold transition-all text-slate-400 hover:text-white";
+                teacherInputs.classList.remove('hidden');
+                studentInputs.classList.add('hidden');
+            }
+        }
+
+        // Handle Login Logic
+        function handleLogin(e) {
+            e.preventDefault();
+            const errorEl = document.getElementById('loginError');
+            errorEl.classList.add('hidden');
+
+            if (currentRole === 'teacher') {
+                const pin = document.getElementById('teacherPin').value.trim();
+                if (pin === TEACHER_PIN) {
+                    showTeacherDashboard();
+                } else {
+                    showError("كود المستر غير صحيح!");
+                }
+            } else {
+                const name = document.getElementById('studentName').value.trim();
+                const selectedClass = document.getElementById('studentClassSelect').value;
+                const pin = document.getElementById('studentClassPin').value.trim();
+
+                if (!name) {
+                    showError("يرجى كتابة اسم الطالب!");
+                    return;
+                }
+
+                if (pin !== CLASS_PINS[selectedClass]) {
+                    showError(`كود فصل ${selectedClass} غير صحيح!`);
+                    return;
+                }
+
+                // Register student automatically if not exists
+                let student = db[selectedClass].find(s => s.name.toLowerCase() === name.toLowerCase());
+                if (!student) {
+                    student = { id: Date.now(), name: name, points: 0 };
+                    db[selectedClass].push(student);
+                    saveData();
+                }
+
+                loggedStudent = { name: student.name, class: selectedClass };
+                showStudentDashboard();
+            }
+        }
+
+        function showError(msg) {
+            const errorEl = document.getElementById('loginError');
+            errorEl.innerText = msg;
+            errorEl.classList.remove('hidden');
+        }
+
+        // Logout
+        function logout() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('studentDashboard').classList.add('hidden');
+            document.getElementById('teacherDashboard').classList.add('hidden');
+            document.getElementById('logoutBtn').classList.add('hidden');
+            document.getElementById('currentRoleText').innerText = "صفحة الدخول الرئيسية";
+            document.getElementById('teacherPin').value = '';
+            document.getElementById('studentClassPin').value = '';
+            document.getElementById('studentName').value = '';
+            loggedStudent = null;
+        }
+
+        // --- STUDENT DASHBOARD ---
+        function showStudentDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('studentDashboard').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('currentRoleText').innerText = `لوحة الطالب - فصل ${loggedStudent.class}`;
+
+            document.getElementById('currentStudentDisplayName').innerText = loggedStudent.name;
+            document.getElementById('currentStudentClassBadge').innerText = `فصل ${loggedStudent.class}`;
+            document.getElementById('studentLeaderboardClass').innerText = loggedStudent.class;
+
+            renderStudentLeaderboard();
+        }
+
+        function renderStudentLeaderboard() {
+            const list = [...db[loggedStudent.class]].sort((a, b) => b.points - a.points);
+            const tbody = document.getElementById('studentLeaderboardBody');
+            
+            // Find current student points
+            const me = db[loggedStudent.class].find(s => s.name.toLowerCase() === loggedStudent.name.toLowerCase());
+            document.getElementById('studentMyPoints').innerText = me ? me.points : 0;
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-500">لا يوجد طلاب مسجلين في هذا الفصل حتى الآن</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map((student, index) => {
+                const isMe = student.name.toLowerCase() === loggedStudent.name.toLowerCase();
+                let rankBadge = `<span class="font-bold text-slate-400">#${index + 1}</span>`;
+                if (index === 0) rankBadge = `<i class="fa-solid fa-crown text-amber-400 text-lg"></i>`;
+                else if (index === 1) rankBadge = `<i class="fa-solid fa-medal text-slate-300 text-lg"></i>`;
+                else if (index === 2) rankBadge = `<i class="fa-solid fa-medal text-amber-600 text-lg"></i>`;
+
+                return `
+                    <tr class="${isMe ? 'bg-indigo-600/20 font-bold border-r-2 border-indigo-500' : 'hover:bg-slate-800/40'}">
+                        <td class="p-3 font-semibold">${rankBadge}</td>
+                        <td class="p-3 ${isMe ? 'text-indigo-300' : 'text-slate-200'}">${student.name} ${isMe ? '(أنت)' : ''}</td>
+                        <td class="p-3 text-center font-extrabold ${student.points >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${student.points}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // --- TEACHER DASHBOARD ---
+        function showTeacherDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('teacherDashboard').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('currentRoleText').innerText = "لوحة المستر - التحكم بالنقاط";
+
+            switchTeacherClass('9A');
+        }
+
+        function switchTeacherClass(className) {
+            activeTeacherClass = className;
+            ['9A', '9B', '9C'].forEach(c => {
+                const btn = document.getElementById(`btnClass${c}`);
+                if (c === className) {
+                    btn.className = "px-5 py-2 rounded-xl text-xs font-bold transition-all bg-indigo-600 text-white shadow-md";
+                } else {
+                    btn.className = "px-5 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white";
+                }
+            });
+
+            document.getElementById('currentTeacherClassTitle').innerText = className;
+            renderTeacherStudents();
+        }
+
+        function renderTeacherStudents() {
+            const students = db[activeTeacherClass];
+            const tbody = document.getElementById('teacherStudentsBody');
+
+            if (!students || students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500">لا يوجد طلاب مسجلين في هذا الفصل. أضف طلاباً من الأعلى!</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = students.map(student => `
+                <tr class="hover:bg-slate-800/40">
+                    <td class="p-3 font-semibold text-slate-200">${student.name}</td>
+                    <td class="p-3 text-center font-extrabold ${student.points >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${student.points}</td>
+                    <td class="p-3 text-center">
+                        <div class="flex justify-center items-center gap-1.5">
+                            <button onclick="changePoints(${student.id}, 1)" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">+1</button>
+                            <button onclick="changePoints(${student.id}, 5)" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">+5</button>
+                            <button onclick="changePoints(${student.id}, -1)" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">-1</button>
+                            <button onclick="changePoints(${student.id}, -5)" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">-5</button>
+                        </div>
+                    </td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteStudent(${student.id})" class="text-slate-500 hover:text-rose-400 p-1 transition-all">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function handleAddStudent(e) {
+            e.preventDefault();
+            const input = document.getElementById('newStudentName');
+            const name = input.value.trim();
+            if (!name) return;
+
+            db[activeTeacherClass].push({
+                id: Date.now(),
+                name: name,
+                points: 0
+            });
+
+            saveData();
+            input.value = '';
+            renderTeacherStudents();
+        }
+
+        function changePoints(studentId, delta) {
+            const student = db[activeTeacherClass].find(s => s.id === studentId);
+            if (student) {
+                student.points += delta;
+                saveData();
+                renderTeacherStudents();
+            }
+        }
+
+        function deleteStudent(studentId) {
+            if (confirm("هل أنت تأكد من حذف هذا الطالب؟")) {
+                db[activeTeacherClass] = db[activeTeacherClass].filter(s => s.id !== studentId);
+                saveData();
+                renderTeacherStudents();
+            }
+        }
+
+        function resetClassPoints() {
+            if (confirm(`هل أنت تأكد من تصفير نقاط كافة طلاب فصل ${activeTeacherClass}؟`)) {
+                db[activeTeacherClass].forEach(s => s.points = 0);
+                saveData();
+                renderTeacherStudents();
+            }
+        }
+    </script>
+</body>
+</html>
